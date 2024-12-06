@@ -23,15 +23,15 @@ public class AuthService {
         String email = dto.getEmail();
         String name = dto.getName();
         String password = passwordEncoder.encode(dto.getPassword());
-
+        if(!userService.checkEmail(email)){
+            throw new IllegalArgumentException("중복된 이메일입니다");
+        }
         User newUser = User.builder()
                 .email(email)
                 .name(name)
                 .password(password)
                 .build();
-
         userRepository.save(newUser);
-
         return UserDto.fromEntity(newUser);
     }
 

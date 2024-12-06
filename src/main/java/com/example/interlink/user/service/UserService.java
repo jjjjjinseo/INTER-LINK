@@ -8,6 +8,8 @@ import com.example.interlink.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -21,6 +23,11 @@ public class UserService {
     public UserDto readByEmail(String email){
         User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
         return UserDto.fromEntity(user);
+    }
+
+    public boolean checkEmail(String email){
+        Optional<User> opUser = userRepository.findByEmail(email);
+        return opUser.isEmpty();
     }
 
 }
