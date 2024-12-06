@@ -2,6 +2,8 @@ package com.example.interlink.user.service;
 
 import com.example.interlink.jwt.util.JwtUtil;
 import com.example.interlink.user.domain.User;
+import com.example.interlink.user.dto.SignInReqDto;
+import com.example.interlink.user.dto.SignInResDto;
 import com.example.interlink.user.dto.SignUpReqDto;
 import com.example.interlink.user.dto.UserDto;
 import com.example.interlink.user.repository.UserRepository;
@@ -13,7 +15,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthService {
     private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     public UserDto signUp(SignUpReqDto dto) {
         String email = dto.getEmail();
@@ -29,5 +33,15 @@ public class AuthService {
         userRepository.save(newUser);
 
         return UserDto.fromEntity(newUser);
+    }
+
+    public SignInResDto signIn(SignInReqDto signInReqDto){
+        String email = signInReqDto.getEmail();
+        UserDto userDto= userService.readByEmail(email);
+        if (passwordEncoder.matches(signInReqDto.getPassword(), userDto.getPassword())) {
+            return new SignInResDto(jwtUtil.generateAccessToken(userDto.getEmail(), userDto.getId()));
+        }else {
+            throw new IllegalArgumentException("Invalid password");
+        }
     }
 }

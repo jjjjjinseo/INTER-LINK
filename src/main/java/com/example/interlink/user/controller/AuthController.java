@@ -1,5 +1,6 @@
 package com.example.interlink.user.controller;
 
+import com.example.interlink.user.dto.SignInReqDto;
 import com.example.interlink.user.dto.SignUpReqDto;
 import com.example.interlink.user.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthService authService;
     @PostMapping("/sign-up")
-    private ResponseEntity<?> create(@RequestBody SignUpReqDto signUpDto){
+    private ResponseEntity<?> signUp(@RequestBody SignUpReqDto signUpDto){
         return ResponseEntity.ok(authService.signUp(signUpDto));
+    }
+
+    @PostMapping("/sign-in")
+    private ResponseEntity<?> signIn(@RequestBody SignInReqDto signInDto){
+        return ResponseEntity.ok(authService.signIn(signInDto));
     }
 }
