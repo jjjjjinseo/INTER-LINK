@@ -24,8 +24,13 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
 
+    private static final int MAX_RESERVATIONS = 4;
+
     @Transactional
     public Long reserveTicket(Long userId, Long ticketId) {
+
+        validateReservationLimit(userId);
+
         //lock 걸기
         Ticket ticket = ticketRepository.findByIdWithLock(ticketId)
                 .orElseThrow(() -> new IllegalArgumentException("티켓을 찾을 수 없습니다."));
@@ -51,5 +56,15 @@ public class ReservationService {
         ticket.updateStatus(TicketStatus.SOLD);
 
         return reservation.getId();
+    }
+
+    private void validateReservationLimit(Long userId) {
+        int currentReservations = (int) reservationRepository.findAll().stream()
+                .filter(reservation -> reservation.getUser().getId().equals(userId))
+                .count();
+
+        if (currentReservations >= MAX_RESERVATIONS) {
+            throw new IllegalStateException("한 사용자는 최대 4장의 티켓만 예약할 수 있습니다.");
+        }
     }
 }
