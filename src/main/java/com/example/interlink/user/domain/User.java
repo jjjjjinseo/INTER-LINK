@@ -3,7 +3,6 @@ package com.example.interlink.user.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
-@Data
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
