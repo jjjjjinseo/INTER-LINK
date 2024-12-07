@@ -26,6 +26,7 @@ public class SecurityConfig {
     private static final String[] publicEndpoints = {
             "/auth/sign-in",
             "/auth/sign-up",
+            "/event/**",
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs/**",
