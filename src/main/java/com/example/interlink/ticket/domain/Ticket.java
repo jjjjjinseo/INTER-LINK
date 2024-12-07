@@ -29,4 +29,8 @@ public class Ticket {
         this.status = status;
         this.event = event;
     }
+
+    public void updateStatus(TicketStatus newStatue){
+        this.status = newStatue;
+    }
 }

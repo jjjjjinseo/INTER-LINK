@@ -29,6 +29,17 @@ public class Event {
     @Column
     private String description;
 
+    @Column(nullable = false)
     private int maxTickets;
+
+    @Column(nullable = false)
+    private int availableTickets;
+
+    public void decreaseAvailableTickets() {
+        if (availableTickets <= 0) {
+            throw new IllegalStateException("티켓이 매진되었습니다.");
+        }
+        this.availableTickets--;
+    }
 
 }
