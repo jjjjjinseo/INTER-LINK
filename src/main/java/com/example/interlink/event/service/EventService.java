@@ -6,12 +6,15 @@ import com.example.interlink.event.dto.EventReqDto;
 import com.example.interlink.event.repository.EventRepository;
 import com.example.interlink.ticket.domain.Ticket;
 import com.example.interlink.ticket.domain.TicketStatus;
+import com.example.interlink.ticket.dto.TicketDto;
 import com.example.interlink.ticket.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,5 +48,16 @@ public class EventService {
             tickets.add(ticket);
         }
         ticketRepository.saveAll(tickets);
+    }
+
+    public List<EventDto> list(){
+        return eventRepository.findAll().stream()
+                .map(EventDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+    public EventDto read(Long eventId){
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("이벤트를 찾을 수 없습니다."));
+        return EventDto.fromEntity(event);
     }
 }

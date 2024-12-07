@@ -4,10 +4,7 @@ import com.example.interlink.event.dto.EventReqDto;
 import com.example.interlink.event.service.EventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,4 +16,15 @@ public class EventController {
     public ResponseEntity<?> create(@RequestBody  EventReqDto eventReqDto){
         return ResponseEntity.ok(eventService.create(eventReqDto));
     }
+
+    @GetMapping("")
+    public ResponseEntity<?> list(){
+        return ResponseEntity.ok(eventService.list());
+    }
+
+    @GetMapping("/{eventId}")
+    public ResponseEntity<?> read(@PathVariable Long eventId){
+        return ResponseEntity.ok(eventService.read(eventId));
+    }
+
 }
