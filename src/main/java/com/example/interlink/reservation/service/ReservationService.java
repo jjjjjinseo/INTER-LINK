@@ -26,7 +26,8 @@ public class ReservationService {
 
     @Transactional
     public Long reserveTicket(Long userId, Long ticketId) {
-        Ticket ticket = ticketRepository.findById(ticketId)
+        //lock 걸기
+        Ticket ticket = ticketRepository.findByIdWithLock(ticketId)
                 .orElseThrow(() -> new IllegalArgumentException("티켓을 찾을 수 없습니다."));
 
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
