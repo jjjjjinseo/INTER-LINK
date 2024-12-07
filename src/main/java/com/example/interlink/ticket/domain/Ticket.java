@@ -15,6 +15,7 @@ public class Ticket {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column
     private int price;
 
     @Enumerated(EnumType.STRING)

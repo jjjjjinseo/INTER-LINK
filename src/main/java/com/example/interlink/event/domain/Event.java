@@ -1,10 +1,7 @@
 package com.example.interlink.event.domain;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +31,17 @@ public class Event {
 
     @Column(nullable = false)
     private int availableTickets;
+
+    @Builder
+    public Event(String name, LocalDateTime eventDate, String venue, String description, int maxTickets, int availableTickets) {
+        this.name = name;
+        this.eventDate = eventDate;
+        this.venue = venue;
+        this.description = description;
+        this.maxTickets = maxTickets;
+        this.availableTickets = availableTickets;
+    }
+
 
     public void decreaseAvailableTickets() {
         if (availableTickets <= 0) {

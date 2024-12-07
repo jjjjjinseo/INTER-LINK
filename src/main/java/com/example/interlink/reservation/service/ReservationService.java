@@ -12,6 +12,7 @@ import com.example.interlink.user.repository.UserRepository;
 import com.example.interlink.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -22,6 +23,8 @@ public class ReservationService {
     private final TicketRepository ticketRepository;
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
+
+    @Transactional
     public Long reserveTicket(Long userId, Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new IllegalArgumentException("티켓을 찾을 수 없습니다."));
