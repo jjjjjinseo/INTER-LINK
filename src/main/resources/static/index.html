@@ -16,27 +16,10 @@
       padding: 10px;
       margin: 10px;
     }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
-      padding: 10px;
-      border: 1px solid #007bff;
-      margin: 5px;
-      background-color: #f4f4f4;
-      position: relative;
-    }
-    .waiting-badge {
-      position: absolute;
-      top: 50%;
-      left: 10px;
-      transform: translateY(-50%);
-      background-color: #007bff;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 12px;
+    #current-user-status {
+      font-size: 1.5rem;
+      margin-top: 20px;
+      color: #007bff;
     }
   </style>
 </head>
@@ -44,12 +27,50 @@
 <h1>실시간 대기열</h1>
 <input type="number" id="userId" placeholder="사용자 ID 입력">
 <button onclick="enterQueue()">대기열 추가</button>
-<h2>대기 상태</h2>
-<ul id="waiting-list"></ul>
+<p id="current-user-status">대기 상태를 확인 중입니다...</p>
 
 <script>
   let stompClient;
-  let userId;
+  let currentUserId = null; // 현재 사용자 ID 저장
+
+  function enterQueue() {
+    const userIdInput = document.getElementById('userId');
+    const userId = userIdInput.value;
+
+    if (!userId) {
+      alert('사용자 ID를 입력해주세요.');
+      return;
+    }
+
+    currentUserId = userId; // 현재 사용자 ID 저장
+
+    fetch(`http://localhost:8080/queue/enter?userId=${userId}&maxTickets=3`, {
+      method: 'POST',
+    })
+            .then(response => response.json())
+            .then(result => {
+              console.log('서버 응답:', result);
+
+              if (result.status === 'QUEUE') {
+                console.log(`Redirecting to seat.html with userId: ${userId}`);
+                window.location.href = `/seat.html?userId=${userId}`;
+              } else if (result.status === 'WAITING') {
+                console.log(`대기 상태입니다. 내 앞에 ${result.position + 1}명이 있습니다.`);
+                updateWaitingStatus(result.position + 1);
+              } else {
+                console.error('예기치 못한 상태:', result);
+              }
+            })
+            .catch(err => {
+              console.error('대기열 추가 중 오류:', err);
+              alert('대기열 추가 중 오류가 발생했습니다.');
+            });
+  }
+
+  function updateWaitingStatus(position) {
+    const currentUserDisplay = document.getElementById('current-user-status');
+    currentUserDisplay.textContent = `현재 대기열에서 내 앞에 ${position}명이 있습니다.`;
+  }
 
   function connectWebSocket() {
     const socket = new SockJS('http://localhost:8080/ws');
@@ -61,82 +82,23 @@
       // 대기열 상태 구독
       stompClient.subscribe('/topic/queue/1', (message) => {
         const queueDetails = JSON.parse(message.body);
-        updateWaiting(queueDetails.waiting || []);
+
+        // 현재 사용자 위치를 확인하고 갱신
+        const position = queueDetails.waiting.indexOf(currentUserId);
+        if (position >= 0) {
+          updateWaitingStatus(position);
+        }
+
+        // 현재 사용자가 QUEUE로 들어간 경우 리다이렉트 처리
+        if (queueDetails.queue.includes(currentUserId)) {
+          console.log(`Redirecting to seat.html for userId: ${currentUserId}`);
+          window.location.href = `/seat.html?userId=${currentUserId}`;
+        }
       });
     }, (error) => {
       console.error('WebSocket 연결 실패:', error);
     });
   }
-
-  function enterQueue() {
-    const userIdInput = document.getElementById('userId');
-    const userId = userIdInput.value;
-
-    if (!userId) {
-      alert('사용자 ID를 입력해주세요.');
-      return;
-    }
-
-    fetch(`http://localhost:8080/queue/enter?userId=${userId}&maxTickets=3`, {
-      method: 'POST',
-    })
-            .then(response => response.json())
-            .then(result => {
-              console.log('서버 응답:', result);
-
-              // 사용자 상태 확인
-              if (result.status === 'QUEUE') {
-                // 대기열에 추가된 경우 좌석 선택 페이지로 이동
-                console.log(`Redirecting to seat.html with userId: ${userId}`);
-                window.location.href = `/seat.html?userId=${userId}`;
-              } else if (result.status === 'WAITING') {
-                // 대기 상태인 경우 대기 목록 업데이트
-                console.log(`대기 상태입니다. 내 앞에 ${result.position+1}명이 있습니다.`);
-                updateWaiting(result.waitingList || []);
-              } else {
-                console.error('예기치 못한 상태:', result);
-              }
-            })
-            .catch(err => {
-              console.error('대기열 추가 중 오류:', err);
-              alert('대기열 추가 중 오류가 발생했습니다.');
-            });
-  }
-
-  function updateWaiting(waitingList) {
-    const waitingContainer = document.getElementById('waiting-list');
-    const existingItems = new Set();
-
-    waitingContainer.querySelectorAll('li').forEach((item) => {
-      const userId = item.dataset.userId;
-      existingItems.add(userId);
-    });
-
-    waitingList.forEach((userId, index) => {
-      if (!existingItems.has(userId)) {
-        const listItem = document.createElement('li');
-        const badge = document.createElement('span');
-
-        badge.classList.add('waiting-badge');
-        badge.textContent = `대기 ${index + 1}번`;
-
-        listItem.textContent = `사용자 ID: ${userId}`;
-        listItem.dataset.userId = userId; // 사용자 ID를 dataset에 저장
-        listItem.appendChild(badge);
-        waitingContainer.appendChild(listItem);
-      }
-    });
-
-    // 기존 대기 상태에서 없어진 사용자 제거
-    waitingContainer.querySelectorAll('li').forEach((item) => {
-      const userId = item.dataset.userId;
-      if (!waitingList.includes(userId)) {
-        item.remove();
-      }
-    });
-  }
-
-
 
   // 페이지 로드 시 WebSocket 연결
   document.addEventListener('DOMContentLoaded', () => {
