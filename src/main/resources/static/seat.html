@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>좌석 선택</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        .seat-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-width: 300px;
+            margin: 20px auto;
+        }
+
+        .seat {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #007AFF;
+            background-color: #E0E0E0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .seat.selected {
+            background-color: #007AFF;
+            color: white;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007AFF;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:disabled {
+            background-color: #CCCCCC;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+<h1>좌석 선택</h1>
+<div class="seat-container" id="seatContainer"></div>
+<div class="controls">
+    <button id="confirmButton" disabled>확인</button>
+</div>
+
+<script>
+    const totalSeats = 10; // 총 좌석 수
+    let selectedSeat = null;
+
+    // URL에서 userId 가져오기
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+
+    if (!userId) {
+        alert('잘못된 접근입니다.');
+        window.location.href = '/';
+    }
+
+    const seatContainer = document.getElementById('seatContainer');
+    const confirmButton = document.getElementById('confirmButton');
+
+    // 좌석 생성
+    for (let i = 1; i <= totalSeats; i++) {
+        const seat = document.createElement('div');
+        seat.classList.add('seat');
+        seat.textContent = i;
+        seat.dataset.seatNumber = i; // 좌석 번호 저장
+
+        // 좌석 클릭 이벤트
+        seat.addEventListener('click', () => selectSeat(seat, i));
+        seatContainer.appendChild(seat);
+    }
+
+    // 좌석 선택
+    function selectSeat(seat, seatNumber) {
+        if (selectedSeat) {
+            selectedSeat.classList.remove('selected');
+        }
+        seat.classList.add('selected');
+        selectedSeat = seat;
+
+        confirmButton.disabled = false;
+        confirmButton.dataset.seatNumber = seatNumber; // 선택된 좌석 번호 저장
+    }
+
+    // 좌석 예약 요청
+    confirmButton.addEventListener('click', () => {
+        const seatNumber = confirmButton.dataset.seatNumber;
+        fetch(`http://localhost:8080/ticket/${seatNumber}/reserve?userId=${userId}`, {
+            method: 'POST',
+        })
+            .then(response => {
+                if (response.ok) {
+                    alert(`좌석 ${seatNumber}번 예약 완료!`);
+                    window.location.href = '/';
+                } else {
+                    return response.text().then(err => {
+                        alert(`예약 실패: ${err}`);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('예약 요청 중 오류 발생:', err);
+                alert('예약 요청 중 오류가 발생했습니다.');
+            });
+    });
+</script>
+</body>
+</html>
