@@ -20,6 +20,7 @@
       font-size: 1.5rem;
       margin-top: 20px;
       color: #007bff;
+      transition: all 0.3s ease; /* 부드러운 애니메이션 */
     }
   </style>
 </head>
@@ -32,10 +33,12 @@
 <script>
   let stompClient;
   let currentUserId = null; // 현재 사용자 ID 저장
+  let lastPosition = null; // 이전 위치 저장 (깜빡임 방지)
 
+  // 대기열에 사용자 추가
   function enterQueue() {
     const userIdInput = document.getElementById('userId');
-    const userId = userIdInput.value;
+    const userId = userIdInput.value.trim();
 
     if (!userId) {
       alert('사용자 ID를 입력해주세요.');
@@ -52,11 +55,11 @@
               console.log('서버 응답:', result);
 
               if (result.status === 'QUEUE') {
-                console.log(`Redirecting to seat.html with userId: ${userId}`);
+                // QUEUE 상태라면 바로 좌석 선택 페이지로 이동
                 window.location.href = `/seat.html?userId=${userId}`;
               } else if (result.status === 'WAITING') {
-                console.log(`대기 상태입니다. 내 앞에 ${result.position + 1}명이 있습니다.`);
-                updateWaitingStatus(result.position + 1);
+                // WAITING 상태라면 내 앞에 몇 명인지 표시
+                updateWaitingStatus(result.position);
               } else {
                 console.error('예기치 못한 상태:', result);
               }
@@ -67,11 +70,24 @@
             });
   }
 
+  // 대기 상태 업데이트
   function updateWaitingStatus(position) {
     const currentUserDisplay = document.getElementById('current-user-status');
-    currentUserDisplay.textContent = `현재 대기열에서 내 앞에 ${position}명이 있습니다.`;
+
+    // 이전 위치와 동일하면 업데이트하지 않음 (깜빡임 방지)
+    if (lastPosition === position) return;
+
+    lastPosition = position; // 현재 위치 저장
+
+    // 상태 업데이트
+    if (position === -1) {
+      currentUserDisplay.textContent = '현재 대기 상태가 아닙니다.';
+    } else {
+      currentUserDisplay.textContent = `현재 대기열에서 내 앞에 ${position}명이 있습니다.`;
+    }
   }
 
+  // WebSocket 연결
   function connectWebSocket() {
     const socket = new SockJS('http://localhost:8080/ws');
     stompClient = Stomp.over(socket);
@@ -83,14 +99,16 @@
       stompClient.subscribe('/topic/queue/1', (message) => {
         const queueDetails = JSON.parse(message.body);
 
+        console.log('받은 대기열 상태:', queueDetails);
+
         // 현재 사용자 위치를 확인하고 갱신
-        const position = queueDetails.waiting.indexOf(currentUserId);
-        if (position >= 0) {
+        if (queueDetails.waiting && queueDetails.waiting.includes(currentUserId)) {
+          const position = queueDetails.waiting.indexOf(currentUserId);
           updateWaitingStatus(position);
         }
 
         // 현재 사용자가 QUEUE로 들어간 경우 리다이렉트 처리
-        if (queueDetails.queue.includes(currentUserId)) {
+        if (queueDetails.queue && queueDetails.queue.includes(currentUserId)) {
           console.log(`Redirecting to seat.html for userId: ${currentUserId}`);
           window.location.href = `/seat.html?userId=${currentUserId}`;
         }
