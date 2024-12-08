@@ -35,28 +35,38 @@
 <h2>대기열 상태</h2>
 <ul id="queue-list"></ul>
 
+<h2>대기 상태</h2>
+<ul id="waiting-list"></ul>
+
 <script>
   let stompClient;
 
+  // WebSocket 연결 및 대기열 구독
   function connectWebSocket() {
     const socket = new SockJS('http://localhost:8080/ws');
-    const stompClient = Stomp.over(socket);
+    stompClient = Stomp.over(socket);
 
     stompClient.connect({}, () => {
       console.log('WebSocket 연결 성공');
       stompClient.subscribe('/topic/queue/1', (message) => {
         console.log('수신 메시지:', message.body); // 메시지 디버깅
-        const queue = JSON.parse(message.body);
-        updateQueue(queue);
+        const queueDetails = JSON.parse(message.body);
+        updateQueue(queueDetails);  // 대기열 및 대기 상태 업데이트
       });
     }, (error) => {
       console.error('WebSocket 연결 실패:', error);
     });
   }
+
+  // 대기열에 사용자 추가
   function enterQueue() {
     const userId = document.getElementById('userId').value;
+    if (!userId) {
+      alert('사용자 ID를 입력해주세요.');
+      return;
+    }
 
-    fetch(`http://localhost:8080/queue/enter?userId=${userId}`, {
+    fetch(`http://localhost:8080/queue/enter?userId=${userId}&maxTickets=3`, {
       method: 'POST',
     })
             .then(response => response.text())
@@ -64,25 +74,49 @@
             .catch(err => console.error(err));
   }
 
-  function updateQueue(queue) {
+  // 대기열 및 대기 상태 업데이트
+  function updateQueue(queueDetails) {
     const queueList = document.getElementById('queue-list');
-    queueList.innerHTML = ''; // 기존 리스트 초기화
+    const waitingList = document.getElementById('waiting-list');
+    const userId = document.getElementById('userId').value;  // 현재 사용자 ID
 
-    Object.entries(queue).forEach(([userId, details], index) => {
+    queueList.innerHTML = '';  // 대기열 초기화
+    waitingList.innerHTML = '';  // 대기 상태 초기화
+
+    const queue = queueDetails.queue || [];
+    const waiting = queueDetails.waiting || [];
+    const maxTickets = queueDetails.maxTickets || 0;
+
+    // 대기열 표시
+    queue.forEach((userIdInQueue, index) => {
       const listItem = document.createElement('li');
-
-      const status = details.status || "UNKNOWN";
-      const joinedAt = details.joinedAt || "N/A";
-
-      listItem.textContent = `${index + 1}. 사용자 ID: ${userId}, 상태: ${status}, 대기 시작: ${joinedAt}`;
+      listItem.textContent = `${index + 1}. 사용자 ID: ${userIdInQueue}`;
       queueList.appendChild(listItem);
     });
 
-    console.log('대기열 상태 업데이트:', queue);
+    // 대기 상태 표시
+    waiting.forEach((userIdInWaiting, index) => {
+      const listItem = document.createElement('li');
+      listItem.textContent = `${index + 1}. 사용자 ID: ${userIdInWaiting}, 대기 순서: ${index + 1}`;
+      waitingList.appendChild(listItem);
+    });
+
+    // 내 대기 상태 표시
+    const positionInQueue = queue.indexOf(userId);
+    const positionInWaiting = waiting.indexOf(userId);
+
+    if (positionInQueue >= 0) {
+      console.log(`대기열에 있습니다. 현재 순서: ${positionInQueue + 1}`);
+    } else if (positionInWaiting >= 0) {
+      console.log(`대기 중입니다. 내 앞에 ${positionInWaiting}명 남았습니다.`);
+    } else {
+      console.log("대기열 또는 대기 상태에 없습니다.");
+    }
   }
 
-
+  // WebSocket 연결
   connectWebSocket();
 </script>
+
 </body>
 </html>
