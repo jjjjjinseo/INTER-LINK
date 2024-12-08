@@ -33,6 +33,10 @@ public class SecurityConfig {
             "/swagger-resources/**",
             "/webjars/**",
             "/error",
+            "/index.html",
+            "/ws",
+            "/ws/**",
+            "/queue/**"
     };
 
     @Bean

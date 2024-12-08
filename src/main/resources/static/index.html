@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Queue Monitor</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 10px;
+      border: 1px solid #007bff;
+      margin: 5px;
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+<h1>실시간 대기열</h1>
+<input type="number" id="userId" placeholder="사용자 ID 입력">
+<button onclick="enterQueue()">대기열 추가</button>
+<h2>대기열 상태</h2>
+<ul id="queue-list"></ul>
+
+<script>
+  let stompClient;
+
+  function connectWebSocket() {
+    const socket = new SockJS('http://localhost:8080/ws');
+    const stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, () => {
+      console.log('WebSocket 연결 성공');
+      stompClient.subscribe('/topic/queue/1', (message) => {
+        console.log('수신 메시지:', message.body); // 메시지 디버깅
+        const queue = JSON.parse(message.body);
+        updateQueue(queue);
+      });
+    }, (error) => {
+      console.error('WebSocket 연결 실패:', error);
+    });
+  }
+  function enterQueue() {
+    const userId = document.getElementById('userId').value;
+
+    fetch(`http://localhost:8080/queue/enter?userId=${userId}`, {
+      method: 'POST',
+    })
+            .then(response => response.text())
+            .then(result => console.log(result))
+            .catch(err => console.error(err));
+  }
+
+  function updateQueue(queue) {
+    const queueList = document.getElementById('queue-list');
+    queueList.innerHTML = ''; // 기존 리스트 초기화
+
+    Object.entries(queue).forEach(([userId, details], index) => {
+      const listItem = document.createElement('li');
+
+      const status = details.status || "UNKNOWN";
+      const joinedAt = details.joinedAt || "N/A";
+
+      listItem.textContent = `${index + 1}. 사용자 ID: ${userId}, 상태: ${status}, 대기 시작: ${joinedAt}`;
+      queueList.appendChild(listItem);
+    });
+
+    console.log('대기열 상태 업데이트:', queue);
+  }
+
+
+  connectWebSocket();
+</script>
+</body>
+</html>
