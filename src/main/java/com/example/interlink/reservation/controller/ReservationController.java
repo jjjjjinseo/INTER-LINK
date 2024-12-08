@@ -1,27 +1,37 @@
 package com.example.interlink.reservation.controller;
 
-import com.example.interlink.jwt.util.JwtUtil;
+import com.example.interlink.queue.service.QueueService;
 import com.example.interlink.reservation.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/ticket")
 public class ReservationController {
     private final ReservationService reservationService;
-    private final JwtUtil jwtUtil;
+    private final QueueService queueService;
 
     @PostMapping("/{ticketId}/reserve")
     @Operation(summary = "티켓 예매", description = "티켓번호에 해당하는 티켓을 예매합니다.")
-    private ResponseEntity<?> reserveTicket(HttpServletRequest request, @PathVariable Long ticketId){
-        Long userId = jwtUtil.getUserId(jwtUtil.resolveToken(request).substring(7));
-        return ResponseEntity.ok(reservationService.reserveTicket(userId, ticketId));
+    public ResponseEntity<?> reserveTicket(@RequestParam Long userId, @PathVariable Long ticketId) {
+        try {
+            // 티켓 예약 처리
+            reservationService.reserveTicket(userId, ticketId);
+
+            // 대기열에서 처리 완료 후 다음 사용자 처리
+            queueService.removeFromQueue();
+
+            // 대기열 상태 업데이트 메시지 브로드캐스트
+            int queueSize = queueService.getQueueState("ticket:queue").size();
+            queueService.broadcastQueueState(queueSize);
+
+            return ResponseEntity.ok("예매가 완료되었습니다. 감사합니다!");
+        } catch (Exception e) {
+            // 예외 발생 시 오류 메시지 반환
+            return ResponseEntity.badRequest().body("예매 중 오류가 발생했습니다: " + e.getMessage());
+        }
     }
 }
