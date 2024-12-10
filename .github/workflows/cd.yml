@@ -24,5 +24,10 @@ jobs:
           script: |
             cd /home/ubuntu/INTER-LINK/
             git pull origin main
+            
+            rm -rf node_modules
+            npm cache clean --force
             npm install
-            nohup npm start &
+            
+            lsof -t -i:8080 | xargs -r kill
+            nohup npm start > app.log 2>&1 &
