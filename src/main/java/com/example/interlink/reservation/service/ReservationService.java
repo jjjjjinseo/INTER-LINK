@@ -57,7 +57,12 @@ public class ReservationService {
 
         return reservation.getId();
     }
+    public boolean isReserved (Long ticketId){
+        Ticket ticket = ticketRepository.findByIdWithLock(ticketId)
+                .orElseThrow(() -> new IllegalArgumentException("티켓을 찾을 수 없습니다."));
 
+        return reservationRepository.findByTicket(ticket).isPresent();
+    }
     private void validateReservationLimit(Long userId) {
         int currentReservations = (int) reservationRepository.findAll().stream()
                 .filter(reservation -> reservation.getUser().getId().equals(userId))

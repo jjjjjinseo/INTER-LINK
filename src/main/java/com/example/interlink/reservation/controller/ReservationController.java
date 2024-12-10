@@ -14,7 +14,7 @@ public class ReservationController {
     private final ReservationService reservationService;
     private final QueueService queueService;
 
-    @PostMapping("/{ticketId}/reserve")
+    @PostMapping("/{ticketId}")
     @Operation(summary = "티켓 예매", description = "티켓번호에 해당하는 티켓을 예매합니다.")
     public ResponseEntity<?> reserveTicket(@RequestParam Long userId, @PathVariable Long ticketId) {
         try {
@@ -34,4 +34,10 @@ public class ReservationController {
             return ResponseEntity.badRequest().body("예매 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
+    @GetMapping("/status")
+    @Operation(summary = "티켓 예매", description = "티켓번호에 해당하는 티켓을 예매합니다.")
+    public ResponseEntity<?> isReserved( @PathVariable Long ticketId) {
+        return ResponseEntity.ok(reservationService.isReserved(ticketId));
+    }
+
 }
