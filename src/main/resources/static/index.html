@@ -12,28 +12,86 @@
       text-align: center;
       padding: 20px;
     }
+
+    #event-info {
+      margin-bottom: 20px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
     input, button {
       padding: 10px;
       margin: 10px;
     }
+
     #current-user-status {
       font-size: 1.5rem;
       margin-top: 20px;
-      color: #007bff;
-      transition: all 0.3s ease; /* 부드러운 애니메이션 */
+      color: #78359A;
+      transition: all 0.3s ease;
+    }
+
+    #queue-controls {
+      margin-top: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #waiting-image {
+      margin-top: 20px;
+      display: none;
+    }
+
+    #waiting-image img {
+      max-width: 200px;
+      height: auto;
     }
   </style>
 </head>
 <body>
-<h1>실시간 대기열</h1>
-<input type="number" id="userId" placeholder="사용자 ID 입력">
-<button onclick="enterQueue()">대기열 추가</button>
-<p id="current-user-status">대기 상태를 확인 중입니다...</p>
+<!-- 이벤트 정보 -->
+<div id="event-info"></div>
+
+<div id="queue-controls">
+  <input type="number" id="userId" placeholder="사용자 ID">
+  <button id="enterQueueButton" onclick="enterQueue()">예매하기</button>
+</div>
+
+<div id="waiting-image">
+  <img src="/static/alarm-clock.png" alt="Waiting Clock">
+</div>
+
+<p id="current-user-status"></p>
+
 
 <script>
   let stompClient;
   let currentUserId = null; // 현재 사용자 ID 저장
   let lastPosition = null; // 이전 위치 저장 (깜빡임 방지)
+
+  // 이벤트 정보 불러오기
+  function loadEventInfo() {
+    fetch('http://localhost:8080/event/2') // API 경로 수정 필요
+            .then(response => response.json())
+            .then(event => {
+              // 이벤트 정보를 DOM에 추가
+              const eventInfoDiv = document.getElementById('event-info');
+              eventInfoDiv.innerHTML = `
+          <h2>${event.name}</h2>
+          <p><strong>날짜:</strong> ${new Date(event.eventDate).toLocaleString()}</p>
+          <p><strong>장소:</strong> ${event.venue}</p>
+          <p><strong>설명:</strong> ${event.description}</p>
+        `;
+            })
+            .catch(err => {
+              console.error('이벤트 정보 불러오기 실패:', err);
+              document.getElementById('event-info').innerText = '이벤트 정보를 불러오지 못했습니다.';
+            });
+  }
 
   // 대기열에 사용자 추가
   function enterQueue() {
@@ -58,7 +116,10 @@
                 // QUEUE 상태라면 바로 좌석 선택 페이지로 이동
                 window.location.href = `/seat.html?userId=${userId}`;
               } else if (result.status === 'WAITING') {
-                // WAITING 상태라면 내 앞에 몇 명인지 표시
+                // WAITING 상태라면 이벤트 정보 숨기고 시계 이미지 표시
+                document.getElementById('event-info').classList.add('hidden');
+                document.getElementById('waiting-image').style.display = 'block';
+                document.getElementById('queue-controls').classList.add('hidden');
                 updateWaitingStatus(result.position);
               } else {
                 console.error('예기치 못한 상태:', result);
@@ -118,9 +179,10 @@
     });
   }
 
-  // 페이지 로드 시 WebSocket 연결
+  // 페이지 로드 시 실행
   document.addEventListener('DOMContentLoaded', () => {
-    connectWebSocket();
+    loadEventInfo(); // 이벤트 정보 로드
+    connectWebSocket(); // WebSocket 연결
   });
 </script>
 </body>
