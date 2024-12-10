@@ -12,30 +12,110 @@
       text-align: center;
       padding: 20px;
     }
+
+    #event-info {
+      margin-bottom: 20px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
     input, button {
       padding: 10px;
       margin: 10px;
     }
+
     #current-user-status {
       font-size: 1.5rem;
       margin-top: 20px;
-      color: #007bff;
-      transition: all 0.3s ease; /* 부드러운 애니메이션 */
+      color: #78359A;
+      transition: all 0.3s ease;
+    }
+
+    #queue-controls {
+      margin-top: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #waiting-image {
+      margin-top: 20px;
+      display: none;
+    }
+
+    #waiting-image img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    .progress-bar-container {
+      margin: 20px auto;
+      width: 30%;
+      height: 30px;
+      background-color: #e0e0e0;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+      display: none;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #78359A, #A052FF);
+      width: 0;
+      border-radius: 15px;
+      transition: width 0.3s ease-in-out;
     }
   </style>
 </head>
 <body>
-<h1>실시간 대기열</h1>
-<input type="number" id="userId" placeholder="사용자 ID 입력">
-<button onclick="enterQueue()">대기열 추가</button>
-<p id="current-user-status">대기 상태를 확인 중입니다...</p>
+<!-- 이벤트 정보 -->
+<div id="event-info"></div>
+
+<div id="queue-controls">
+  <input type="number" id="userId" placeholder="사용자 ID">
+  <button id="enterQueueButton" onclick="enterQueue()">예매하기</button>
+</div>
+
+<div id="waiting-image">
+  <img src="/static/alarm-clock.png" alt="Waiting Clock">
+</div>
+
+<!-- 프로그레스 바 -->
+<div class="progress-bar-container" id="progressBarContainer">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<p id="current-user-status"></p>
 
 <script>
   let stompClient;
   let currentUserId = null; // 현재 사용자 ID 저장
   let lastPosition = null; // 이전 위치 저장 (깜빡임 방지)
+  let totalQueueSize = 0; // 대기열 전체 크기 저장
 
-  // 대기열에 사용자 추가
+  // 이벤트 정보 불러오기
+  function loadEventInfo() {
+    fetch('http://localhost:8080/event/2') // API 경로 수정 필요
+            .then(response => response.json())
+            .then(event => {
+              const eventInfoDiv = document.getElementById('event-info');
+              eventInfoDiv.innerHTML = `
+          <h2>${event.name}</h2>
+          <p><strong>날짜:</strong> ${new Date(event.eventDate).toLocaleString()}</p>
+          <p><strong>장소:</strong> ${event.venue}</p>
+          <p><strong>설명:</strong> ${event.description}</p>
+        `;
+            })
+            .catch(err => {
+              console.error('이벤트 정보 불러오기 실패:', err);
+              document.getElementById('event-info').innerText = '이벤트 정보를 불러오지 못했습니다.';
+            });
+  }
+
   function enterQueue() {
     const userIdInput = document.getElementById('userId');
     const userId = userIdInput.value.trim();
@@ -55,10 +135,17 @@
               console.log('서버 응답:', result);
 
               if (result.status === 'QUEUE') {
-                // QUEUE 상태라면 바로 좌석 선택 페이지로 이동
-                window.location.href = `/seat.html?userId=${userId}`;
+                window.location.href = `/static/seat.html?userId=${userId}`;
               } else if (result.status === 'WAITING') {
-                // WAITING 상태라면 내 앞에 몇 명인지 표시
+                document.getElementById('event-info').classList.add('hidden');
+                document.getElementById('waiting-image').style.display = 'block';
+                document.getElementById('queue-controls').classList.add('hidden');
+                document.getElementById('progressBarContainer').style.display = 'block';
+
+                // WebSocket 연결 확인
+                connectWebSocket();
+
+                // 대기열 상태 업데이트
                 updateWaitingStatus(result.position);
               } else {
                 console.error('예기치 못한 상태:', result);
@@ -70,47 +157,55 @@
             });
   }
 
+
   // 대기 상태 업데이트
   function updateWaitingStatus(position) {
     const currentUserDisplay = document.getElementById('current-user-status');
-
-    // 이전 위치와 동일하면 업데이트하지 않음 (깜빡임 방지)
-    if (lastPosition === position) return;
-
-    lastPosition = position; // 현재 위치 저장
-
-    // 상태 업데이트
     if (position === -1) {
       currentUserDisplay.textContent = '현재 대기 상태가 아닙니다.';
+      return;
+    }
+    currentUserDisplay.textContent = `현재 대기열에서 내 앞에 ${position}명이 있습니다.`;
+    updateProgressBar(position);
+  }
+
+  // 프로그레스 바 업데이트
+  function updateProgressBar(position) {
+    const progressBar = document.getElementById('progressBar');
+    if (totalQueueSize > 0) {
+      const progress = ((totalQueueSize - position) / totalQueueSize) * 100; // 진행률 계산
+      progressBar.style.width = `${progress}%`;
     } else {
-      currentUserDisplay.textContent = `현재 대기열에서 내 앞에 ${position}명이 있습니다.`;
+      progressBar.style.width = '0%';
     }
   }
 
-  // WebSocket 연결
   function connectWebSocket() {
+    if (stompClient && stompClient.connected) {
+      console.log('이미 WebSocket이 연결되어 있습니다.');
+      return;
+    }
+
     const socket = new SockJS('http://localhost:8080/ws');
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, () => {
       console.log('WebSocket 연결 성공');
 
-      // 대기열 상태 구독
       stompClient.subscribe('/topic/queue/1', (message) => {
         const queueDetails = JSON.parse(message.body);
-
         console.log('받은 대기열 상태:', queueDetails);
 
-        // 현재 사용자 위치를 확인하고 갱신
-        if (queueDetails.waiting && queueDetails.waiting.includes(currentUserId)) {
+        // 대기열 전체 크기 계산
+        totalQueueSize = queueDetails.waiting.length + queueDetails.queue.length;
+
+        if (queueDetails.waiting.includes(currentUserId)) {
           const position = queueDetails.waiting.indexOf(currentUserId);
           updateWaitingStatus(position);
         }
 
-        // 현재 사용자가 QUEUE로 들어간 경우 리다이렉트 처리
-        if (queueDetails.queue && queueDetails.queue.includes(currentUserId)) {
-          console.log(`Redirecting to seat.html for userId: ${currentUserId}`);
-          window.location.href = `/seat.html?userId=${currentUserId}`;
+        if (queueDetails.queue.includes(currentUserId)) {
+          window.location.href = `/static/seat.html?userId=${currentUserId}`;
         }
       });
     }, (error) => {
@@ -118,9 +213,11 @@
     });
   }
 
-  // 페이지 로드 시 WebSocket 연결
+
+  // 페이지 로드 시 실행
   document.addEventListener('DOMContentLoaded', () => {
-    connectWebSocket();
+    loadEventInfo(); // 이벤트 정보 로드
+    connectWebSocket(); // WebSocket 연결
   });
 </script>
 </body>

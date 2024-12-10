@@ -38,7 +38,8 @@ public class SecurityConfig {
             "/ws/**",
             "/queue/**",
             "/seat.html",
-            "/ticket/**"
+            "/ticket/**",
+            "/static/**"
     };
 
     @Bean
