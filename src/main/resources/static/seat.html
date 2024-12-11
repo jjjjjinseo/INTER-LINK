@@ -159,7 +159,7 @@
     // 좌석 예약 요청
     confirmButton.addEventListener('click', () => {
         const seatNumber = confirmButton.dataset.seatNumber;
-        fetch(`http://43.201.250.37:8080/ticket/${seatNumber}/reserve?userId=${userId}`, {
+        fetch(`http://43.201.250.37:8080/ticket/${seatNumber}?userId=${userId}`, {
             method: 'POST',
         })
             .then(response => {
