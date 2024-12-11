@@ -8,6 +8,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
 
+  data:
+    redis:
+      port: 6379
+      host: localhost
+
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -18,5 +23,6 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
   accessExpiration: ${JWT_ACCESS_EXPIRATION}
-  refreshExpiration: ${JWT_REFRESH_EXPIRATION}
   issuer: ${JWT_ISSUER}
+
+spring.mvc.static-path-pattern: /static/**
