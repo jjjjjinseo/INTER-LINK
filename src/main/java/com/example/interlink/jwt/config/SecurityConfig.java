@@ -42,7 +42,8 @@ public class SecurityConfig {
             "/static/**",
             "/signup.html",
             "/health-check.html",
-            "/health-check"
+            "/health-check",
+            "/signin.html"
     };
 
     @Bean
