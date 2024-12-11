@@ -186,7 +186,7 @@
       return;
     }
 
-    const socket = new SockJS('http://localhost:8080/ws');
+    const socket = new SockJS('http://43.201.250.37:8080/ws');
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, () => {
