@@ -41,6 +41,8 @@ public class SecurityConfig {
             "/ticket/**",
             "/static/**",
             "/signup.html",
+            "/health-check.html",
+            "/health-check",
             "/signin.html"
     };
 
