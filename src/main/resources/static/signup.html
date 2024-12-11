@@ -97,7 +97,7 @@
 </div>
 
 <script>
-    document.getElementById('signupForm').addEventListener('submit', function(event) {
+    document.getElementById('signupForm').addEventListener('submit', async function(event) {
         event.preventDefault(); // 기본 폼 제출 동작 방지
 
         // 사용자 입력 가져오기
@@ -131,8 +131,29 @@
         }
 
         if (isValid) {
-            alert('회원가입이 완료되었습니다!');
-            // 여기에 서버로 데이터를 전송하는 코드를 추가할 수 있습니다.
+            try {
+                const response = await fetch('/auth/sign-up', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: userID,
+                        password: userPw,
+                        name: userName
+                    })
+                });
+
+                if (response.ok) {
+                    alert('회원가입이 완료되었습니다!');
+                    document.getElementById('signupForm').reset();
+                } else {
+                    const errorData = await response.json();
+                    alert(`회원가입 실패: ${errorData.message || '알 수 없는 오류'}`);
+                }
+            } catch (error) {
+                alert(`서버 오류: ${error.message}`);
+            }
         }
     });
 </script>
