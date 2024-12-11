@@ -1,21 +1,27 @@
-name: Check Build Possibility
+name: Continuous Integration on Amazon Linux
 
 on:
-  pull_request:
-    branches: ["main"]
+  push:
+    branches: [ "main" ]
 
 jobs:
-  # 1. Build 명령어를 활용한 테스트 진행
-  build-test:
-    runs-on: ubuntu-20.04
-    env:
-      DISABLE_ESLINT_PLUGIN: true
+  build:
+    runs-on: self-hosted
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3.5.1
-        with:
-          node-version: "21.2.0"
-      - name: Install dependencies
-        run: npm install
-      - name: Try build
-        run: npm run build
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Amazon Corretto and Gradle
+        run: |
+          sudo yum update -y
+          sudo yum install -y java-17-amazon-corretto
+          wget https://services.gradle.org/distributions/gradle-7.6-bin.zip
+          sudo unzip gradle-7.6-bin.zip -d /opt/gradle
+          export PATH=$PATH:/opt/gradle/gradle-7.6/bin
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build -x test
