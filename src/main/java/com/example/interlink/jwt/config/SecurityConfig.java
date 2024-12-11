@@ -40,7 +40,8 @@ public class SecurityConfig {
             "/seat.html",
             "/ticket/**",
             "/static/**",
-            "/signup.html"
+            "/signup.html",
+            "/signin.html"
     };
 
     @Bean
