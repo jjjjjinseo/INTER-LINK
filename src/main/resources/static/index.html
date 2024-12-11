@@ -127,7 +127,7 @@
 
     currentUserId = userId; // 현재 사용자 ID 저장
 
-    fetch(`http://43.201.250.37:8080/queue/enter?userId=${userId}&maxTickets=3`, {
+    fetch(`http://localhost:8080/queue/enter?userId=${userId}&maxTickets=500`, {
       method: 'POST',
     })
             .then(response => response.json())
