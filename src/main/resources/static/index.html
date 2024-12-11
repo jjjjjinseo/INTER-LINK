@@ -99,7 +99,7 @@
 
   // 이벤트 정보 불러오기
   function loadEventInfo() {
-    fetch('http://localhost:8080/event/2') // API 경로 수정 필요
+    fetch('http://43.201.250.37:8080/event/2') // API 경로 수정 필요
             .then(response => response.json())
             .then(event => {
               const eventInfoDiv = document.getElementById('event-info');
@@ -186,7 +186,7 @@
       return;
     }
 
-    const socket = new SockJS('http://localhost:8080/ws');
+    const socket = new SockJS('http://43.201.250.37:8080/ws');
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, () => {
