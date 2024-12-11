@@ -132,7 +132,7 @@
 
     async function checkReservationStatus(seatNumber) {
         try {
-            const response = await fetch(`http://localhost:8080/ticket/${seatNumber}/status`);
+            const response = await fetch(`http://43.201.250.37:8080/ticket/${seatNumber}/status`);
             if (response.ok) {
                 const result = await response.json();
                 return !result;
@@ -159,7 +159,7 @@
     // 좌석 예약 요청
     confirmButton.addEventListener('click', () => {
         const seatNumber = confirmButton.dataset.seatNumber;
-        fetch(`http://localhost:8080/ticket/${seatNumber}/reserve?userId=${userId}`, {
+        fetch(`http://43.201.250.37:8080/ticket/${seatNumber}/reserve?userId=${userId}`, {
             method: 'POST',
         })
             .then(response => {
