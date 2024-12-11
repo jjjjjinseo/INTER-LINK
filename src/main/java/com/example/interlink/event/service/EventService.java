@@ -39,9 +39,9 @@ public class EventService {
 
     private void createTicketsForEvent(Event event) {
         List<Ticket> tickets = new ArrayList<>();
-        for (int i = 0; i < event.getMaxTickets(); i++) {
+        for (int i = 0; i < 249; i++) {
             Ticket ticket = Ticket.builder()
-                    .price(10000)
+                    .price(132000)
                     .event(event)
                     .status(TicketStatus.AVAILABLE)
                     .build();
