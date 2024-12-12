@@ -55,6 +55,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080", "http://127.0.0.1:8080","http://43.201.250.37:8080","http://3.35.210.245:8080", "http://localhost:3000","http://metal-load-balancer-300049590.ap-northeast-2.elb.amazonaws.com:8080"));
+        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Collections.singletonList("*"));
         configuration.setAllowCredentials(true); // 인증 정보를 포함한 요청 허용
