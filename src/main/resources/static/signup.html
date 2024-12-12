@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERLINK Signup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        #signup-container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #A052FF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #A052FF;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="signup-container">
+    <h1>회원가입</h1>
+    <form id="signupForm">
+        <div class="form-group">
+            <label for="userName">이름</label>
+            <input type="text" id="userName" placeholder="사용자 이름" required>
+            <div id="userNameError" class="error"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="userID">이메일</label>
+            <input type="email" id="userID" placeholder="이메일" required>
+            <div id="userIDError" class="error"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="userPw">비밀번호</label>
+            <input type="password" id="userPw" placeholder="비밀번호" required>
+            <div id="userPwError" class="error"></div>
+        </div>
+
+        <button type="submit">회원가입</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('signupForm').addEventListener('submit', async function(event) {
+        event.preventDefault(); // 기본 폼 제출 동작 방지
+
+        // 사용자 입력 가져오기
+        const userName = document.getElementById('userName').value;
+        const userID = document.getElementById('userID').value;
+        const userPw = document.getElementById('userPw').value;
+
+        // 오류 메시지 초기화
+        document.getElementById('userNameError').textContent = '';
+        document.getElementById('userIDError').textContent = '';
+        document.getElementById('userPwError').textContent = '';
+
+        let isValid = true;
+
+        // 이름 검증
+        if (userName.length < 3) {
+            document.getElementById('userNameError').textContent = '이름은 최소 3자 이상이어야 합니다.';
+            isValid = false;
+        }
+
+        // 이메일 검증
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userID)) {
+            document.getElementById('userIDError').textContent = '올바른 이메일 형식을 입력하세요.';
+            isValid = false;
+        }
+
+        // 비밀번호 검증
+        if (userPw.length < 6) {
+            document.getElementById('userPwError').textContent = '비밀번호는 최소 6자 이상이어야 합니다.';
+            isValid = false;
+        }
+
+        if (isValid) {
+            try {
+                const response = await fetch('/auth/sign-up', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: userID,
+                        password: userPw,
+                        name: userName
+                    })
+                });
+
+                if (response.ok) {
+                    alert('회원가입이 완료되었습니다!');
+                    document.getElementById('signupForm').reset();
+                } else {
+                    const errorData = await response.json();
+                    alert(`회원가입 실패: ${errorData.message || '알 수 없는 오류'}`);
+                }
+            } catch (error) {
+                alert(`서버 오류: ${error.message}`);
+            }
+        }
+    });
+</script>
+</body>
+</html>

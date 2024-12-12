@@ -24,4 +24,8 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.read(ticketId));
     }
 
+    @GetMapping("/{ticketId}/status")
+    private ResponseEntity<?> isAvailable(@PathVariable Long ticketId){
+        return ResponseEntity.ok(ticketService.isAvailable(ticketId));
+    }
 }

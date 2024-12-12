@@ -24,3 +24,5 @@ jwt:
   secret: ${JWT_SECRET}
   accessExpiration: ${JWT_ACCESS_EXPIRATION}
   issuer: ${JWT_ISSUER}
+
+spring.mvc.static-path-pattern: /static/**

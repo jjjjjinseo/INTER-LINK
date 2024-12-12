@@ -57,7 +57,6 @@ public class ReservationService {
 
         return reservation.getId();
     }
-
     private void validateReservationLimit(Long userId) {
         int currentReservations = (int) reservationRepository.findAll().stream()
                 .filter(reservation -> reservation.getUser().getId().equals(userId))
