@@ -127,7 +127,7 @@
 
     currentUserId = userId; // 현재 사용자 ID 저장
 
-    fetch(`http://metal-load-balancer-300049590.ap-northeast-2.elb.amazonaws.com:8080/queue/enter?userId=${userId}&maxTickets=500`, {
+    fetch(`http://metal-load-balancer-300049590.ap-northeast-2.elb.amazonaws.com:8080/queue/enter?userId=${userId}&maxTickets=249`, {
       method: 'POST',
     })
             .then(response => response.json())
