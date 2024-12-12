@@ -99,7 +99,7 @@
 
   // 이벤트 정보 불러오기
   function loadEventInfo() {
-    fetch('http://43.201.250.37:8080/event/2') // API 경로 수정 필요
+    fetch('http://metal-load-balancer-300049590.ap-northeast-2.elb.amazonaws.com:8080/event/2') // API 경로 수정 필요
             .then(response => response.json())
             .then(event => {
               const eventInfoDiv = document.getElementById('event-info');
@@ -127,7 +127,7 @@
 
     currentUserId = userId; // 현재 사용자 ID 저장
 
-    fetch(`http://43.201.250.37:8080/queue/enter?userId=${userId}&maxTickets=500`, {
+    fetch(`http://metal-load-balancer-300049590.ap-northeast-2.elb.amazonaws.com:8080/queue/enter?userId=${userId}&maxTickets=249`, {
       method: 'POST',
     })
             .then(response => response.json())
@@ -186,7 +186,7 @@
       return;
     }
 
-    const socket = new SockJS('http://43.201.250.37:8080/ws');
+    const socket = new SockJS('http://metal-load-balancer-300049590.ap-northeast-2.elb.amazonaws.com:8080/ws');
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, () => {
